@@ -58,3 +58,19 @@ resource "azurerm_federated_identity_credential" "agent" {
   parent_id           = azurerm_user_assigned_identity.agent.id
   subject             = "system:serviceaccount:${var.agent_namespace}:${var.agent_service_account_name}"
 }
+
+resource "kubernetes_namespace" "agent" {
+  metadata {
+    name = var.agent_namespace
+  }
+}
+
+resource "kubernetes_service_account" "agent" {
+  metadata {
+    name      = var.agent_service_account_name
+    namespace = kubernetes_namespace.agent.metadata.0.name
+    annotations = {
+      "azure.workload.identity/client-id" = azurerm_user_assigned_identity.agent.client_id
+    }
+  }
+}
